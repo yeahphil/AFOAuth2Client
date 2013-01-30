@@ -183,12 +183,17 @@ static NSMutableDictionary * AFKeychainQueryDictionaryWithIdentifier(NSString *i
 
             return;
         }
-
+        
+        AFOAuthCredential *credential = [AFOAuthCredential credentialWithOAuthToken:[responseObject valueForKey:@"access_token"] tokenType:[responseObject valueForKey:@"token_type"]];
+        
         NSString *refreshToken = [responseObject valueForKey:@"refresh_token"];
         refreshToken = refreshToken ? refreshToken : [parameters valueForKey:@"refresh_token"];
-
-        AFOAuthCredential *credential = [AFOAuthCredential credentialWithOAuthToken:[responseObject valueForKey:@"access_token"] tokenType:[responseObject valueForKey:@"token_type"]];
-        [credential setRefreshToken:refreshToken expiration:[NSDate dateWithTimeIntervalSinceNow:[[responseObject valueForKey:@"expires_in"] integerValue]]];
+        
+        NSString *expiresInString = [responseObject valueForKey:@"expires_in"];
+        
+        if (![refreshToken isEqual:[NSNull null]] && ![expiresInString isEqual:[NSNull null]]) {
+            [credential setRefreshToken:refreshToken expiration:[NSDate dateWithTimeIntervalSinceNow:[expiresInString integerValue]]];
+        }
 
         [self setAuthorizationHeaderWithCredential:credential];
 
